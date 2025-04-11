@@ -1,0 +1,31 @@
+init() {
+	if [ -f /etc/nix/nix.conf.backup-before-init ]; then
+		list1="/etc/nix/nix.conf.backup-before-init"	
+		echo "Error: Already initialized. Delete/Reset these to reinitialize:" >&2
+		printf " - %s\n" "${list1}" >&2
+		return 1
+	fi
+
+	# bash
+    sudo cp "$HOME/.config/bash/bash_xdg.sh" /etc/profile.d
+
+	if [ -f $HOME/.config/bash/profile ]; then
+		ln -sf $HOME/.config/bash/profile $HOME/.profile
+	fi
+
+    if [ -f /etc/nix/nix.conf ]; then
+		echo "trusted-users = $USER" | sudo tee -a /etc/nix/nix.conf
+    fi
+	
+	# zsh
+	sudo cp "$HOME/.config/zsh/zsh_xdg.sh" /etc/profile.d
+
+	# if [ -f /etc/zshenv ]; then
+	# 	sudo cp "/etc/zshenv" "/etc/zshenv.backup-before-init"
+	# fi
+	# sudo cp "$HOME/.config/zsh/zshenv" /etc/zshenv
+}
+
+usudo() {
+    sudo -E env PATH="$PATH" "$@"
+}
