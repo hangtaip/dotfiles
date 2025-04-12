@@ -31,7 +31,7 @@ gig() {
         return 1
     fi
 
-    local template=HOME/.config/git/templates/gitignore/gitignore_$1 
+    local template=$HOME/.config/git/templates/gitignore/gitignore_$1 
     if [[ -f "$template" ]]; then
         cp "$template" ./.gitignore
         echo "Created .gitignore for $1"
