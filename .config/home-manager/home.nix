@@ -178,6 +178,8 @@
                 unbind -T copy-mode-vi MouseDragEnd1Pane
             '';
         };
+
+        zoxide.enable = true;
     };
     
     programs.home-manager.enable = true;

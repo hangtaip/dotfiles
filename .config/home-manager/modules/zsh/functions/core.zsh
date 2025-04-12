@@ -21,6 +21,26 @@ dvt() {
     direnv allow
 }
 
+# TODO:
+# if file exist, if reinitiate, do nothing
+# if file exist, different type, merge
+# remove duplicate
+gig() {
+    if [[ -z "$1" ]]; then
+        echo "Usage: gig <type> (e.g., node, python, etc.)" >&2
+        return 1
+    fi
+
+    local template=HOME/.config/git/templates/gitignore/gitignore_$1 
+    if [[ -f "$template" ]]; then
+        cp "$template" ./.gitignore
+        echo "Created .gitignore for $1"
+    else
+        echo "Error: Template '$template' not found!" >&2
+        return 1
+    fi
+}
+
 gpc() {
     local TIMEOUT=$(gopass config cliptimeout 2>/dev/null)
 

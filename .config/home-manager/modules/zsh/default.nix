@@ -25,6 +25,10 @@ let
         (getZshFiles ./extra);
 in
 {
+    imports = [
+        ./extra/autocomplete.nix
+    ];
+
     programs.zsh = {
         enable = true;
 
@@ -87,6 +91,9 @@ in
             # Source modules 
             # take old script and source them, if doesn't want to rewrite here
             ${lib.concatMapStringsSep "\n" sourceFiles allZshFiles}
+
+            fpath=("${config.xdg.configHome}/zsh" $fpath)
+            autoload -Uz compinit & compinit
 
             # echo "Current TMUX sessions: $(tmux list-sessions 2>/dev/null)" # check tmux session
             if [[ -z "$TMUX" ]] && [[ "$SSH_CONNECTION" != "" ]]; then
