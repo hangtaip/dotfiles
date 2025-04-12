@@ -1,6 +1,6 @@
 dotfiles_update() {
     config add -u && \
-    config commit -m "Update $(date + "%Y-%m-%d %H:%M") \
+    config commit -m "Update $(date +"%Y-%m-%d %H:%M") \
         $(uname -s)/$(uname -m)-$(hostname -s)" && config push
 }
 
