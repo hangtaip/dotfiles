@@ -72,10 +72,9 @@ in
         ];
 
         loginExtra = ''
-            if command -v mount_drive >/dev/null && ! findmnt -rno TARGET "/mnt/wsl/PHYSICALDRIVE0p1" >/dev/null; then
-               mount_drive 
+            if command -v mount_drive >/dev/null && ! mountpoint -q "/mnt/wsl/PHYSICALDRIVE0p1" >/dev/null; then
+                mount_drive 
             fi
-
         '';
 
         initExtraFirst = ''
@@ -95,13 +94,6 @@ in
             # fpath=("${config.xdg.configHome}/zsh" $fpath)
             # autoload -Uz compinit & compinit
 
-            # echo "Current TMUX sessions: $(tmux list-sessions 2>/dev/null)" # check tmux session
-            if [[ -z "$TMUX" ]] && [[ "$SSH_CONNECTION" != "" ]]; then
-                tmux attach-session -t 🤖 || tmux new-session -s 🤖
-            elif [[ -z "$TMUX" ]] && [ -n "$DISPLAY" ]; then
-                tmux attach-session -t 🎮 || tmux new-session -s 🎮
-            fi
-
             # Load PowerLevel10k
             () {
                 local XDG_CACHE_HOME="${xdgCacheHome}/p10k"
@@ -111,6 +103,15 @@ in
 
                 [[ ! -f ${config.xdg.configHome}/zsh/.p10k.zsh ]] || . ${config.xdg.configHome}/zsh/.p10k.zsh
             }
+
+            # if ! mountpoint -q "/mnt/wsl/PHYSICALDRIVE0p1" 2>/dev/null; then
+            #     echo this should be last
+            #     await "mount_drive"
+            # fi
+            # tmux_init
+
+            # zshexit() { cleanup; }
+            # trap 'cleanup' HUP
         '';
     };
 }
