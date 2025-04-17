@@ -43,6 +43,7 @@ in
         historySubstringSearch.enable = true;
 
         shellAliases = {
+            "cl" = "clear";
             "cd-proj" = "cd /mnt/wsl/PHYSICALDRIVE0p1/farid";
             "config" = "git --git-dir=${config.home.homeDirectory}/.dotfiles/ --work-tree=${config.home.homeDirectory}";
             # "git-new-repo" = "${config.home.homeDirectory}/.local/bin/create-repo.sh";

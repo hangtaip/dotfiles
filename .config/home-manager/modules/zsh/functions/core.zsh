@@ -1,3 +1,8 @@
+clear() {
+    /usr/bin/clear
+    printf "\n%.0s" {1..100}
+}
+
 dotfiles_update() {
     config add -u && \
     config commit -m "Update $(date +"%Y-%m-%d %H:%M") \
