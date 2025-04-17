@@ -80,6 +80,8 @@ in
         initExtraFirst = ''
             # Set   PowerLevel10k cache directory at the very start
             export P10K_CACHE_DIR="${config.xdg.cacheHome}/p10k"
+
+            printf "\n%.0s" {1..100}
             
             if [[ -r "$P10K_CACHE_DIR/p10k-instant-prompt-''${(%):-%n}.zsh" ]]; then
                 source "$P10K_CACHE_DIR/p10k-instant-prompt-''${(%):-%n}.zsh"
