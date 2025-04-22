@@ -26,6 +26,7 @@
         nix-direnv
         nixd
         noto-fonts-color-emoji
+	pinentry-curses
         ripgrep
         shellcheck
         tlrc

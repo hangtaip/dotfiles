@@ -11,7 +11,7 @@ dotfiles_update() {
 
 dotfiles_init() {
     git --no-replace-objects clone --bare --depth 1 \
-        github.com/hangtaip:dotfiles.git $HOME/.dotfiles;
+        https://github.com/hangtaip/dotfiles.git $HOME/.dotfiles;
     config config --local status.showUntrackedFiles no;
     config checkout -f
 }

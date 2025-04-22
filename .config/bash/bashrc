@@ -119,9 +119,9 @@ if ! shopt -oq posix; then
 	fi
 fi
 
-if [[ $- == *i* ]] && [[ -z "$TMUX" ]] && [[ -n "$TERM" ]]; then
-	exec tmux attach || exec tmux
-fi
+# if [[ $- == *i* ]] && [[ -z "$TMUX" ]] && [[ -n "$TERM" ]]; then
+# 	exec tmux attach || exec tmux
+# fi
 
 export VIMINIT='let $MYVIMRC="$XDG_CONFIG_HOME/vim/vimrc" | source $MYVIMRC'
 # Deno
