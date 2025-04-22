@@ -188,8 +188,8 @@
     services.gpg-agent = {
         enable = true;
         pinentryPackage = pkgs.pinentry-curses;
-        extraConfig = ''
-            RefuseManualStart = false
-        '';
+        # extraConfig = ''
+        #     RefuseManualStart = false
+        # '';
     };
 }
