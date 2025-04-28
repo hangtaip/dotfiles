@@ -32,9 +32,9 @@
         tlrc
         unzip
         xclip
+        zip
         zoxide
         zsh
-        
     ];
 
     home.stateVersion = "24.11";

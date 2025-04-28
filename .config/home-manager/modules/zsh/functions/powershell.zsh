@@ -16,6 +16,10 @@ cmd_winget() {
   pwsh_run "winget $*"
 }
 
+cmd_dotnet() {
+  pwsh_run "dotnet $*"
+}
+
 # task
 cmd_task() {
   pwsh_run "New_ScheduleTask $@"
@@ -43,6 +47,15 @@ cmd_enable_uac() {
   pwsh_run "Set-ItemProperty -Path REGISTRY::HKEY_LOCAL_MACHINE\\Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\System -Name ConsentPromptBehaviorAdmin -Value 5"
 }
 
+cmd_setx() {
+  local var_name="$1"
+  local var_value="$2"
+  local scope="${3:-User}"
+
+  pwsh_run "[System.Environment]::SetEnvironmentVariable('$var_name', '$var_value', '$scope')"
+  pwsh_run "[System.Environment]::GetEnvironmentVariable('$var_name', '$var_value', '$scope')"
+}
+
 # other command
 cmd_exec() {
   pwsh_run "$@"
@@ -55,21 +68,25 @@ cmd_help() {
   echo ""
   echo "Commands:"
   echo "  winget [args]               - Run winget package manager"
+  echo "  dotnet [args]               - Run dotnet cli"
   echo "  task [args]                 - Create scheduled tasks"
   echo "  group [user] [group]        - Add user to a group"
   echo "  elevate [command]           - Run a Powershell command as Administrator"
   echo "  disable_uac                 - Disable User Account Control prompts"
   echo "  enable_uac                  - Enable User Account Control prompts"
+  echo "  setx                        - Set environment variable"
   echo "  exec [command]              - Execute any Powershell command"
   echo "  help                        - Show this help"
   echo ""
   echo "Examples:"
   echo "  pwsh winget search firefox"
+  echo "  pwsh dotnet new -o mysite"
   echo "  pwsh task -TaskName 'MyTask' -Action (New-ScheduledTaskAction -Execute 'notepad.exe')"
   echo "  pwsh group username Administrators"
   echo "  pwsh elevate 'Install-WindowsFeature -Name Web-Server'"
   echo "  pwsh disable_uac      # Disables 'Run as administrator' prompts"
   echo "  pwsh enable_uac       # Restores default UAC behavior"
+  echo "  pwsh setx DOTNET_CLI_TELEMETRY_OPTOUT 1"
   echo "  pwsh exec 'Get-Process | Sort-Object CPU -Descending | Select-Object -First 5'"
 }
 
