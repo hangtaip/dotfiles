@@ -56,6 +56,10 @@ cmd_setx() {
   pwsh_run "[System.Environment]::GetEnvironmentVariable('$var_name', '$var_value', '$scope')"
 }
 
+cmd_podman() {
+  pwsh_run "podman $*"
+}
+
 # other command
 cmd_exec() {
   pwsh_run "$@"
@@ -74,8 +78,9 @@ cmd_help() {
   echo "  elevate [command]           - Run a Powershell command as Administrator"
   echo "  disable_uac                 - Disable User Account Control prompts"
   echo "  enable_uac                  - Enable User Account Control prompts"
-  echo "  setx                        - Set environment variable"
+  echo "  setx [options]              - Set environment variable"
   echo "  exec [command]              - Execute any Powershell command"
+  echo "  podman [command]            - Execute podman command"
   echo "  help                        - Show this help"
   echo ""
   echo "Examples:"
@@ -87,6 +92,7 @@ cmd_help() {
   echo "  pwsh disable_uac      # Disables 'Run as administrator' prompts"
   echo "  pwsh enable_uac       # Restores default UAC behavior"
   echo "  pwsh setx DOTNET_CLI_TELEMETRY_OPTOUT 1"
+  echo "  pwsh podman build -t my-api ."
   echo "  pwsh exec 'Get-Process | Sort-Object CPU -Descending | Select-Object -First 5'"
 }
 
