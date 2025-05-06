@@ -1,6 +1,7 @@
 clear() {
     /usr/bin/clear
     printf "\n%.0s" {1..100}
+    tput cup "$LINES" 0 2>/dev/null || tput cup 1000 0
 }
 
 config() {

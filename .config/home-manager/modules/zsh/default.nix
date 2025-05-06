@@ -51,6 +51,7 @@ in
             else
                 "ls --color=auto";
             "man" = "batman";
+            "podman" = "podman-remote-static-linux_amd64";
         };
 
         envExtra = ''
@@ -86,6 +87,9 @@ in
             if [[ -r "$P10K_CACHE_DIR/p10k-instant-prompt-''${(%):-%n}.zsh" ]]; then
                 source "$P10K_CACHE_DIR/p10k-instant-prompt-''${(%):-%n}.zsh"
             fi
+
+            # podman
+            export XDG_RUNTIME_DIR=/run/user/$(id -u)
         '';
 
         initExtra = ''
@@ -95,6 +99,13 @@ in
 
             # fpath=("${config.xdg.configHome}/zsh" $fpath)
             # autoload -Uz compinit & compinit
+
+            # podman
+            if [ ! -d "$XDG_RUNTIME_DIR" ]; then
+                sudo mkdir -p "$XDG_RUNTIME_DIR"
+                sudo chown -R "$(id -u):$(id -g)" "/run/user/$(id -u)"
+                sudo chmod 700 "$XDG_RUNTIME_DIR"
+            fi
 
             # Load PowerLevel10k
             () {
