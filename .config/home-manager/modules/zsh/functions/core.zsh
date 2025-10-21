@@ -15,9 +15,12 @@ dotfiles_update() {
 }
 
 dotfiles_init() {
-    git --no-replace-objects clone --bare --depth 1 \
+    git --no-replace-objects clone --bare \
         https://github.com/hangtaip/dotfiles.git $HOME/.dotfiles;
     config config --local status.showUntrackedFiles no;
+    config remote set-url origin https://github.com/hangtaip/dotfiles.git
+    config fetch origin main:refs/remotes/origin/main
+    config symbolic-ref HEAD refs/heads/main
     config checkout -f
 }
 
@@ -42,7 +45,7 @@ dvd() {
         return 1
     fi
 
-    echo "use flake \"github:hangtaip/dev-templates?dir=$tt\"" > .envrc
+    echo "use flake \"github:hangtaip/dev-templates?dir=$tt\"" --no-write-lock-file > .envrc
     direnv allow
 
     for hook in "${hooks[@]}"; do
