@@ -19,9 +19,12 @@
         fd
         fzf
         git-credential-gopass
+        gnumake
         gnupg
         gh
         gopass
+        luarocks
+        lua51Packages.lua
         jq
         neovim
         nix-direnv
@@ -33,7 +36,7 @@
         tlrc
         tmux
         unzip
-        xclip
+        wl-clipboard
         zip
         zoxide
         zsh
@@ -43,8 +46,9 @@
 
     nix.gc = {
         automatic = true;
-        frequency = "weekly";
-        options = "--delete-older-than 7d";
+        dates = "weekly";
+        # options = "--delete-older-than 6d";
+        options = "-d";
     };
 
     nixpkgs.config.allowUnfree = true;
@@ -120,7 +124,7 @@
 
     services.gpg-agent = {
         enable = true;
-        pinentryPackage = pkgs.pinentry-curses;
+        pinentry.package = pkgs.pinentry-curses;
         # extraConfig = ''
         #     RefuseManualStart = false
         # '';
