@@ -45,6 +45,7 @@
             }
         ];
         extraConfig = ''
+            set -g renumber-w on
             set -ag terminal-overrides ",*256col*:RGB"
             unbind %
             bind | split-window -h -c "#{pane_current_path}"

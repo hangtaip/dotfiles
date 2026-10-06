@@ -1,1 +1,11 @@
 node_modules
+build/
+dist/
+.direnv
+.envrc
+.env
+
+src/archives
+*:Zone.Identifier
+
+note

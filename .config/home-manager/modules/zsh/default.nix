@@ -3,6 +3,7 @@
 let
     # Read all .zsh files from your function directory
     p10k = pkgs.zsh-powerlevel10k;
+    zshAsyncVersion = "1.8.6";
 
     xdgCacheHome = if config.xdg.cacheHome != null then config.xdg.cacheHome else "$HOME/.cache";
 
@@ -25,10 +26,6 @@ let
         (getZshFiles ./extra);
 in
 {
-    # imports = [
-    #     ./extra/autocomplete.nix
-    # ];
-
     programs.zsh = {
         enable = true;
 
@@ -56,15 +53,17 @@ in
         };
 
         envExtra = ''
-            export extra_to_remove=removeLater
             export EDITOR=nvim
             export MYSHELL=zsh
-            export DENO_INSTALL_ROOT="${config.xdg.configHome}/deno"
+            export DENO_INSTALL_ROOT=${config.xdg.configHome}/deno
             # export PATH=$HOME/bin:$HOME/.local/bin:/usr/local/bin:$PATH
             export FZF_BASE="${pkgs.fzf}/bin/fzf"
             export VIMINIT='let $MYVIMRC="${config.xdg.configHome}/vim/vimrc" | source $MYVIMRC'
-            export PNPM_HOME=/mnt/wsl/PHYSICALDRIVE0p1/.pnpm-store/v10
-            LESSHISTFILE="${config.xdg.stateHome}/less/lesshst"
+            export NUGET_PACKAGES="/mnt/wsl/PHYSICALDRIVE0p1/farid/.local/share/nuget"
+            #export PNPM_HOME=/mnt/wsl/PHYSICALDRIVE0p1/.pnpm-store/v10 
+            export PNPM_HOME=/mnt/wsl/PHYSICALDRIVE0p1/farid/.local/share/pnpm/store/v10
+            export LOCAL_BIN=${config.home.homeDirectory}/.local/bin
+            LESSHISTFILE=${config.xdg.stateHome}/less/lesshst
         '';
 
         plugins = [
@@ -72,13 +71,23 @@ in
                 name = "powerlevel10k";
                 src = p10k;
                 file = "share/zsh-powerlevel10k/powerlevel10k.zsh-theme";
-            } 
+            }
+            {
+                name = "zsh-async";
+                src = pkgs.fetchFromGitHub {
+                  owner = "mafredri";
+                  repo = "zsh-async";
+                  rev = "v${zshAsyncVersion}";
+                  hash = "sha256-Js/9vGGAEqcPmQSsumzLfkfwljaFWHJ9sMWOgWDi0NI=";
+                };
+                file = "async.zsh";
+            }
         ];
 
         loginExtra = ''
-            if command -v mount_drive >/dev/null && ! mountpoint -q "/mnt/wsl/PHYSICALDRIVE0p1" >/dev/null; then
-                mount_drive 
-            fi
+            # if command -v mount_drive >/dev/null && ! mountpoint -q "/mnt/wsl/PHYSICALDRIVE0p1" >/dev/null; then
+            #     mount_drive 
+            # fi
         '';
 
         initContent = 
@@ -86,20 +95,26 @@ in
                 # Set   PowerLevel10k cache directory at the very start
                 export P10K_CACHE_DIR="${config.xdg.cacheHome}/p10k"
 
-                printf "\n%.0s" {1..100}
-                
+                printf "\n%.0s" {1..100} 
                 if [[ -r "$P10K_CACHE_DIR/p10k-instant-prompt-''${(%):-%n}.zsh" ]]; then
                     source "$P10K_CACHE_DIR/p10k-instant-prompt-''${(%):-%n}.zsh"
                 fi
 
                 # podman
                 export XDG_RUNTIME_DIR=/run/user/$(id -u)
+
+                # Initialize zsh-async
+                # fpath=("${config.xdg.configHome}/zsh/plugins/zsh-async" $fpath)
+                # autoload -Uz zsh-async && zsh-ansync
             ''; 
         # initExtra = ''
             extra = ''
+                export PATH="$LOCAL_BIN:$PNPM_HOME:$PATH"
                 # Source modules 
                 # take old script and source them, if doesn't want to rewrite here
                 ${lib.concatMapStringsSep "\n" sourceFiles allZshFiles}
+                async_init
+                async_start_jobs
 
                 # fpath=("${config.xdg.configHome}/zsh" $fpath)
                 # autoload -Uz compinit & compinit
@@ -121,26 +136,12 @@ in
                     [[ ! -f ${config.xdg.configHome}/zsh/.p10k.zsh ]] || . ${config.xdg.configHome}/zsh/.p10k.zsh
                 }
 
-                # if ! mountpoint -q "/mnt/wsl/PHYSICALDRIVE0p1" 2>/dev/null; then
-                #     echo this should be last
-                #     await "mount_drive"
-                # fi
+                setopt HIST_IGNORE_SPACE
+
                 # tmux_init
 
                 # zshexit() { cleanup; }
                 # trap 'cleanup' HUP
-
-                # wsl2 wayland-0
-                if grep -qE "(Microsoft|WSL)" /proc/version > /dev/null 2>&1; then
-                    SOURCE_PATH="/mnt/wslg/runtime-dir/wayland-0"
-                    TARGET_PATH="/run/user/$UID/wayland-0"
-
-                    if [ -e "$SOURCE_PATH" ] && [ ! -e "$TARGET_PATH" ]; then
-                        mkdir -p "/run/user/$UID"
-                        ${pkgs.coreutils}/bin/ln -s "$SOURCE_PATH" "$TARGET_PATH"
-                        echo "WSLg Wayland socket linked for Nix/Neovim."
-                    fi
-                fi
             '';
         in lib.mkMerge [extraFirst extra];
     };

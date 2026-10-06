@@ -92,6 +92,30 @@ gig() {
     fi
 }
 
+mygp() {
+  if [[ -z "$1" ]]; then
+    echo "Usage: mygp <path/to/store>" >&2
+    return 1
+  fi
+
+  local secret
+  if ! secret=$(gopass show "$1" 2>/dev/null); then
+    echo "Error: Secret '$1' is not found or gopass failed." >&2
+    return 1
+  fi
+
+  printf "%s\n" "$secret" | jq -sR '
+    split("\n")
+    | map(select(length > 0))
+    | { password: .[0] }
+      + (.[1:]
+         | map(select(contains(": ")))
+         | map(split(": "))
+         | map({ (.[0]): (.[1:] | join(": ")) })
+         | add // {})
+  '
+}
+
 gpc() {
     local TIMEOUT=$(gopass config cliptimeout 2>/dev/null)
 
@@ -126,4 +150,25 @@ noty() {
 
 usudo() {
     sudo -E env PATH="$PATH" "$@"
+}
+
+check_nixbin() {
+    local reset="\e[0m"
+    local bold="\e[1m"
+    local yellow="\e[33m"
+    local red="\e[31m"
+
+    if [[ -d "$HOME/.nix-profile/bin" && ! -L "/opt/nixbin" ]]; then
+        echo -e "${yellow}⚠️/opt/nixbin symlink is missing.${reset}"
+        echo "Fix: sudo mkdir -p /opt && sudo ln -s $HOME/.nix-profile/bin /opt/nixbin"
+        echo ""
+    fi
+
+    if ! sudo -ll | grep -q "/opt/nixbin"; then
+        echo -e "${red}❌ /opt/nixbin is not in sudo secure_path!${reset}"
+        echo "Sudo won't find your nix-installed tools (nvim, etc)."
+        echo "Action: Run 'sudo visudo' and append to secure_path:"
+        echo -e "${bold}Defaults secure_path=\"...:/opt/nixbin\"${reset}"
+        echo "----------------------------------------------------------"
+    fi
 }

@@ -1,15 +1,18 @@
-{ config, pkgs, ... }:
+{ config, pkgs, pkgs-unstable, ... }:
 
 {
     imports = [
+        ./modules/sops/default.nix
         ./modules/zsh/default.nix
         ./modules/tmux/default.nix
+        ./modules/lazysql/default.nix
     ];
 
     home.username = "farid";
     home.homeDirectory = "/home/farid";
 
-    home.packages = with pkgs; [
+    home.packages = (with pkgs; [
+        age
         bat
         bc
         clang
@@ -19,39 +22,51 @@
         fd
         fzf
         git-credential-gopass
+        gh
         gnumake
         gnupg
-        gh
         gopass
+        grpcurl
+        lazysql
         luarocks
         lua51Packages.lua
         jq
-        neovim
         nix-direnv
         nixd
+        ncdu
         noto-fonts-color-emoji
-	pinentry-curses
+	     pinentry-curses
         ripgrep
         shellcheck
+        sops
         tlrc
         tmux
         unzip
+        uv
         wl-clipboard
         zip
         zoxide
         zsh
-    ];
+    ])
 
-    home.stateVersion = "24.11";
+    ++
 
-    nix.gc = {
-        automatic = true;
-        dates = "weekly";
-        # options = "--delete-older-than 6d";
-        options = "-d";
-    };
+    (with pkgs-unstable; [
+      neovim
+    ]);
+
+    home.stateVersion = "26.05";
+
+    # nix.gc = {
+    #     automatic = true;
+    #     dates = "weekly";
+    #     # options = "--delete-older-than 6d";
+    #     options = "-d";
+    # };
 
     nixpkgs.config.allowUnfree = true;
+    
+    xdg.enable = true;
 
     programs = {
         bat = {
@@ -76,6 +91,15 @@
             };
         };
 
+        delta = {
+            enable = true;
+            enableGitIntegration = true;
+            options = {
+                  navigate = true;
+                  side-by-side = true;
+            };
+        };
+
         direnv = {
             enable = true;
             nix-direnv.enable = true; 
@@ -85,18 +109,13 @@
 
         git = {
             enable = true;
-            userName = "hangtaip";
-            userEmail = "hangtaip.stabilize940@passinbox.com";
-            delta = {
-                enable = true;
-                options = {
-                    navigate = true;
-                    side-by-side = true;
+            settings = {
+                user = {
+                    name = "hangtaip";
+                    email = "hangtaip.stabilize940@passinbox.com";
                 };
-            };
-            extraConfig = {
                 core = {
-                    editor = "${pkgs.neovim}/bin/nvim";
+                    editor = "${pkgs-unstable.neovim}/bin/nvim";
                 };
                 credential = {
                     helper = "gopass";
