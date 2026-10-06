@@ -4,24 +4,24 @@ clear() {
     tput cup "$LINES" 0 2>/dev/null || tput cup 1000 0
 }
 
-config() {
+dotfiles() {
     git --git-dir=$HOME/.dotfiles/ --work-tree=$HOME "$@"
 }
 
 dotfiles_update() {
-    config add -u && \
-    config commit -m "Update $(date +"%Y-%m-%d %H:%M") \
-        $(uname -s)/$(uname -m)-$(hostname -s)" && config push -u origin main
+    dotfiles add -u && \
+    dotfiles commit -m "Update $(date +"%Y-%m-%d %H:%M") \
+        $(uname -s)/$(uname -m)-$(hostname -s)" && dotfiles push -u origin main
 }
 
 dotfiles_init() {
     git --no-replace-objects clone --bare \
         https://github.com/hangtaip/dotfiles.git $HOME/.dotfiles;
-    config config --local status.showUntrackedFiles no;
-    config remote set-url origin https://github.com/hangtaip/dotfiles.git
-    config fetch origin main:refs/remotes/origin/main
-    config symbolic-ref HEAD refs/heads/main
-    config checkout -f
+    dotfiles config --local status.showUntrackedFiles no;
+    dotfiles remote set-url origin https://github.com/hangtaip/dotfiles.git
+    dotfiles fetch origin main:refs/remotes/origin/main
+    dotfiles symbolic-ref HEAD refs/heads/main
+    dotfiles checkout -f
 }
 
 dvd() {
