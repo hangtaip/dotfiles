@@ -3,9 +3,11 @@
 {
     imports = [
         ./modules/sops/default.nix
-        ./modules/zsh/default.nix
-        ./modules/tmux/default.nix
+        ./modules/git/default.nix
         ./modules/lazysql/default.nix
+        ./modules/ssh/default.nix
+        ./modules/tmux/default.nix
+        ./modules/zsh/default.nix
     ];
 
     home.username = "farid";
@@ -106,31 +108,6 @@
         };
 
         fzf.enable = true;
-
-        git = {
-            enable = true;
-            settings = {
-                user = {
-                    name = "hangtaip";
-                    email = "hangtaip.stabilize940@passinbox.com";
-                };
-                core = {
-                    editor = "${pkgs-unstable.neovim}/bin/nvim";
-                };
-                credential = {
-                    helper = "gopass";
-                };
-                diff = {
-                    colorMoved = "default";
-                };
-                init = {
-                    defaultBranch = "main";
-                };
-                merge = {
-                    conflictstyle = "diff3"; 
-                };
-            };
-        };
 
         gpg = {
             enable = true;

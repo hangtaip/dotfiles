@@ -53,16 +53,17 @@ in
         };
 
         envExtra = ''
-            export EDITOR=nvim
-            export MYSHELL=zsh
             export DENO_INSTALL_ROOT=${config.xdg.configHome}/deno
-            # export PATH=$HOME/bin:$HOME/.local/bin:/usr/local/bin:$PATH
+            export EDITOR=nvim
             export FZF_BASE="${pkgs.fzf}/bin/fzf"
-            export VIMINIT='let $MYVIMRC="${config.xdg.configHome}/vim/vimrc" | source $MYVIMRC'
+            export LOCAL_BIN=${config.home.homeDirectory}/.local/bin
+            export MYSHELL=zsh
             export NUGET_PACKAGES="/mnt/wsl/PHYSICALDRIVE0p1/farid/.local/share/nuget"
+            # export PATH=$HOME/bin:$HOME/.local/bin:/usr/local/bin:$PATH
             #export PNPM_HOME=/mnt/wsl/PHYSICALDRIVE0p1/.pnpm-store/v10 
             export PNPM_HOME=/mnt/wsl/PHYSICALDRIVE0p1/farid/.local/share/pnpm/store/v10
-            export LOCAL_BIN=${config.home.homeDirectory}/.local/bin
+            export PROMPT_EOL_MARK=""
+            export VIMINIT='let $MYVIMRC="${config.xdg.configHome}/vim/vimrc" | source $MYVIMRC'
             LESSHISTFILE=${config.xdg.stateHome}/less/lesshst
         '';
 
@@ -138,11 +139,88 @@ in
 
                 setopt HIST_IGNORE_SPACE
 
+                # cache ssh passphrase
+                eval $(ssh-agent)
+                ssh-add
+
                 # tmux_init
 
                 # zshexit() { cleanup; }
                 # trap 'cleanup' HUP
+
+                source ${config.xdg.configHome}/zsh/ssh-init.zsh
             '';
         in lib.mkMerge [extraFirst extra];
+    };
+
+    sops.templates."zsh_ssh-init" = {
+      path = "${config.xdg.configHome}/zsh/ssh-init.zsh";
+      mode = "0600";
+      content = ''
+        gopass() {
+          if [[ -f "${config.sops.secrets.local_gopass_age_pass.path}" ]]; then
+            export GOPASS_AGE_PASSWORD="$(< "${config.sops.secrets.local_gopass_age_pass.path}")"
+          fi
+
+          command gopass "$@"
+        }
+
+        ssh-init() {
+          forgejo_flag=""
+          github_flag=""
+
+          while [[ $# -gt 0 ]]; do
+            case "$1" in
+            --forgejo)
+              forgejo_flag="$2"
+              shift 2
+              ;;
+            --github)
+              github_flag="$2"
+              shift 2
+              ;;
+            *)
+              shift 1
+              ;;
+            esac
+          done
+
+          local forgejo_filename="${config.home.homeDirectory}/.ssh/${config.sops.placeholder.git_forgejo_filename}"
+          local github_filename="${config.home.homeDirectory}/.ssh/${config.sops.placeholder.git_github_filename}"
+          export GOPASS_AGE_PASSWORD="$(< "${config.sops.secrets.local_gopass_age_pass.path}")"
+
+          if [[ ! -f "$forgejo_filename" ||  "$\{forgejo_flag:l\}" == "force" ]]; then
+            local forgejo_comment="${config.sops.placeholder.git_forgejo_comment}"
+
+            if ! "$(gopass show gopass-dev/ssh/${config.sops.placeholder.git_forgejo_host}/${config.sops.placeholder.git_forgejo_filename})" &>/dev/null; then
+              echo "Generating default passphrase for forgejo in gopass..."
+
+              gopass generate gopass-dev/ssh/${config.sops.placeholder.git_forgejo_host}/${config.sops.placeholder.git_forgejo_filename} ${config.sops.placeholder.git_forgejo_pass_length}
+            fi
+
+            local passphrase="$(mygp gopass-dev/ssh/${config.sops.placeholder.git_forgejo_host}/${config.sops.placeholder.git_forgejo_filename} | jq -r ".password")"
+
+            ssh-keygen -t ed25519 -f "$forgejo_filename" -N "$passphrase" -a 100 -C "$forgejo_comment"
+          else
+            echo "😀: $forgejo_filename already exist. To overwrite it; run \"ssh-init --forgejo force\""
+          fi
+
+          if [[ ! -f "$github_filename" ||  "$\{github_flag:l\}" == "force" ]]; then
+            local github_comment="${config.sops.placeholder.git_github_comment}"
+
+            if ! "$(gopass show gopass-dev/ssh/${config.sops.placeholder.git_github_host}/${config.sops.placeholder.git_github_filename})" &>/dev/null; then
+              echo "Generating default passphrase for github in gopass..."
+
+              gopass generate gopass-dev/ssh/${config.sops.placeholder.git_github_host}/${config.sops.placeholder.git_github_filename} ${config.sops.placeholder.git_github_pass_length}
+            fi
+
+            local passphrase="$(mygp gopass-dev/ssh/${config.sops.placeholder.git_github_host}/${config.sops.placeholder.git_github_filename} | jq -r ".password")"
+
+            ssh-keygen -t ed25519 -f "$github_filename" -N "$passphrase" -a 100 -C "$github_comment"
+          else
+            echo "😀: $github_filename already exist. To overwrite it; run \"ssh-init --github force\""
+          fi
+        }
+      '';
     };
 }
