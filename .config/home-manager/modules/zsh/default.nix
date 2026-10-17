@@ -250,8 +250,6 @@ in
           export GOPASS_AGE_PASSWORD="$(< "${config.sops.secrets.local_gopass_age_pass.path}")"
           local target_platform=("github" "forgejo")
           local platform="$target_platform[$target_ind]"
-          echo "target_ind: $target_ind"
-          echo "platform: $platform"
 
           local pass_target=""
           local key_target=""
