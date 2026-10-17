@@ -221,6 +221,65 @@ in
             echo "😀: $github_filename already exist. To overwrite it; run \"ssh-init --github force\""
           fi
         }
+
+        ssh-pass-change() {
+          local new_pass=""
+          local target_ind=""
+
+          while [[ $# -gt 0 ]]; do
+            case "$1" in
+            -p)
+              new_pass="$2"
+              shift 2
+              ;;
+            -t)
+              target_ind="$2"
+              shift 2
+              ;;
+            *)
+              shift 1
+              ;;
+            esac
+          done
+
+          if [[ -z "$new_pass" || -z "$target_ind" ]]; then
+            echo "ERROR: usage: ssh-pass-change -p <new_pass> -t <1:github|2:forgejo>"
+            return 1
+          fi
+
+          export GOPASS_AGE_PASSWORD="$(< "${config.sops.secrets.local_gopass_age_pass.path}")"
+          local target_platform=("github" "forgejo")
+          local platform="$target_platform[$target_ind]"
+          echo "target_ind: $target_ind"
+          echo "platform: $platform"
+
+          local pass_target=""
+          local key_target=""
+
+          if [[ "$platform" == "github" ]]; then
+            pass_target="gopass-dev/ssh/${config.sops.placeholder.git_github_host}/${config.sops.placeholder.git_github_filename}"
+            key_target="${config.home.homeDirectory}/.ssh/${config.sops.placeholder.git_github_filename}"
+          elif [[ "$platform" == "forgejo" ]]; then
+            pass_target="gopass-dev/ssh/${config.sops.placeholder.git_forgejo_host}/${config.sops.placeholder.git_forgejo_filename}" 
+            key_target="${config.home.homeDirectory}/.ssh/${config.sops.placeholder.git_forgejo_filename}"
+          else
+            echo "ERROR: Invalid target index. Use 1 for github, 2 for forgejo"
+            return 1
+          fi
+
+          local old_passphrase="$(mygp "$pass_target" | jq -r ".password")"
+
+          echo "Updating SSH key passphrase for $key_target..."
+          ssh-keygen -p -f "$key_target" -P "$old_passphrase" -N "$new_pass"
+
+          if [[ $? -eq 0 ]]; then
+            gopass insert --force "$pass_target" <<< "$new_pass"
+            echo "✅: Password for $pass_target and "$ssh_file_target" updated."
+          else
+            echo "❌: Failed to update SSH key passphrase."
+            return 1
+          fi
+        }
       '';
     };
 }
