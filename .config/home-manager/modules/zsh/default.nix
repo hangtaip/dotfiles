@@ -189,7 +189,7 @@ in
           local github_filename="${config.home.homeDirectory}/.ssh/${config.sops.placeholder.git_github_filename}"
           export GOPASS_AGE_PASSWORD="$(< "${config.sops.secrets.local_gopass_age_pass.path}")"
 
-          if [[ ! -f "$forgejo_filename" ||  "$\{forgejo_flag:l\}" == "force" ]]; then
+          if [[ ! -f "$forgejo_filename" ||  "''${forgejo_flag:l}" == "force" ]]; then
             local forgejo_comment="${config.sops.placeholder.git_forgejo_comment}"
 
             if ! "$(gopass show gopass-dev/ssh/${config.sops.placeholder.git_forgejo_host}/${config.sops.placeholder.git_forgejo_filename})" &>/dev/null; then
@@ -202,10 +202,10 @@ in
 
             ssh-keygen -t ed25519 -f "$forgejo_filename" -N "$passphrase" -a 100 -C "$forgejo_comment"
           else
-            echo "😀: $forgejo_filename already exist. To overwrite it; run \"ssh-init --forgejo force\""
+            echo "😀: $forgejo_filename already exist. To overwrite it; run 'ssh-init --forgejo force'"
           fi
 
-          if [[ ! -f "$github_filename" ||  "$\{github_flag:l\}" == "force" ]]; then
+          if [[ ! -f "$github_filename" ||  "''${github_flag:l}" == "force" ]]; then
             local github_comment="${config.sops.placeholder.git_github_comment}"
 
             if ! "$(gopass show gopass-dev/ssh/${config.sops.placeholder.git_github_host}/${config.sops.placeholder.git_github_filename})" &>/dev/null; then
@@ -218,7 +218,7 @@ in
 
             ssh-keygen -t ed25519 -f "$github_filename" -N "$passphrase" -a 100 -C "$github_comment"
           else
-            echo "😀: $github_filename already exist. To overwrite it; run \"ssh-init --github force\""
+            echo "😀: $github_filename already exist. To overwrite it; run 'ssh-init --github force'"
           fi
         }
 
@@ -276,6 +276,133 @@ in
           else
             echo "❌: Failed to update SSH key passphrase."
             return 1
+          fi
+        }
+
+        cl-direnv() {
+          local help="0"
+          local mounted_dir=""
+
+          while [[ $# -gt 0 ]]; do
+            case "$1" in
+            --help)
+              help="1"
+              shift
+              ;;
+            *)
+              mounted_dir="$1"
+              shift
+              ;;
+            esac
+          done
+
+          if [ "$help" -eq 1 ]; then
+            echo "Usage: cl-direnv [<mounted_dir>]"
+            echo "Description: Manages direnv cache clearance. <mounted_dir> defaulted to the sops placeholder if omitted."
+            return 0
+          fi
+          
+          mounted_dir="''${mounted_dir:-${config.sops.placeholder.mnt_projects_dir}}"
+          if [ -d "$mounted_dir" ]; then
+            echo "Cleaning .direnv directories in $mounted_dir..."
+            find "$mounted_dir" \( -type d -name ".direnv" -o -type f -name "flake.lock" \) -exec sh -c '
+              for target in "$@"; do
+                project_dir="$(dirname "$target")"
+                echo "Denying direnv for: $project_dir"
+                direnv deny "$project_dir" 2>/dev/null
+
+                
+                direnv_dir="$project_dir/.direnv"
+                if [ -d "$direnv_dir" ]; then
+                  printf "Remove .direnv directory (%s)? [y/N]: " "$direnv_dir"
+                  read -r reply < /dev/tty
+
+                  case "$reply" in
+                    [Yy]*)
+                      echo "Removing: $direnv_dir"
+                      rm -rf "$direnv_dir"
+                      ;;
+                    *)
+                      echo "Skipped .direnv."
+                      ;;
+                  esac
+                fi
+
+                lock_file="$project_dir/flake.lock"
+                if [ -f "$lock_file" ]; then
+                  printf "Remove flake.lock (%s) to force dependency updates? [y/N]: " "$lock_file"
+                  read -r reply < /dev/tty
+                  case "$reply" in
+                    [Yy]*)
+                      echo "Removing: $lock_file"
+                      rm -f "$lock_file"
+                      ;;
+                    *)
+                      echo "Skipped flake.lock."
+                      ;;
+                  esac
+                fi
+
+                echo "🗑️-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-🗑️"
+              done
+
+
+            ' sh {} +
+            echo "Done."
+          else
+            echo "ERROR: Directory '$mounted_dir' does not exist."
+            return 1
+          fi
+        }
+
+        cl-cache-js() {
+          local help="0"
+          local project_dir=""
+
+          while [[ $# -gt 0 ]]; do
+            case "$1" in
+            --help)
+              help=1
+              shift
+              ;;
+            *)
+              project_dir="$1"
+              shift
+              ;;
+            esac
+          done
+
+          if [ "$help" -eq 1 ]; then
+            echo "Usage: cl-cache-js [<project_dir>]"
+            echo "Description: Manages javascript cache clearance. <project_dir> defaulted to the sops placeholder if omitted."
+            return 0
+          fi
+
+          project_dir="''${project_dir:-${config.sops.placeholder.mnt_projects_javascript_dir}}"
+          if [ -d "$project_dir" ]; then
+            echo "Cleaning node_modules/.cache directory in $project_dir..."
+            find "$project_dir" -type d -path "*/node_modules/.cache" -exec sh -c '
+              for d in "$@"; do
+                echo "Found .cache folder: $d"
+
+                printf "Remove %s? [y/N]: " "$d"
+                read -r reply < /dev/tty
+
+                case "$reply" in
+                  [Yy]*)
+                    echo "Removing: $d"
+                    rm -rf "$d"
+                    ;;
+                  *)
+                    echo "Skipped."
+                    ;;
+                esac
+              done
+            ' sh {} +
+            echo "Done."
+          else
+            echo "ERROR: Directory '$project_dir' does not exist."
+            return 0
           fi
         }
       '';

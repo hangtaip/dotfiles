@@ -9,6 +9,8 @@
       development_database_postgres_user = {};
       development_database_postgres_pass = {};
       local_gopass_age_pass = {};
+      mnt_projects_dir = {};
+      mnt_projects_javascript_dir = {};
       # git
       git_github_filename = {
         sopsFile = ../../secrets/secrets-git.yaml;
